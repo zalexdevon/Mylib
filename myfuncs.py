@@ -1559,3 +1559,7 @@ def evaluate_regressor_on_test_data_18(
     model_results_text = f"MAE: {train_mae}"
 
     return model_results_text
+
+
+def subtract_demo_git(a, b): 
+    return a -b 
