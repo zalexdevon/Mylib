@@ -1440,7 +1440,7 @@ def get_classification_report_18(model, feature, target, class_names: list):
     return metrics.classification_report(target, prediction)
 
 
-def find_best_model_train_val_scoring_when_using_RandomisedSearch_GridSearch(
+def find_best_model_train_val_scoring_when_using_RandomisedSearch_GridSearch_19(
     cv_results, scoring
 ):
     """Tìm chỉ số train-val cho mô hình tốt nhất sau khi sử dụng RandomisedSearch hoặc GridSearch
@@ -1463,3 +1463,63 @@ def find_best_model_train_val_scoring_when_using_RandomisedSearch_GridSearch(
         )
 
     return train_scoring, val_scoring
+
+
+def convert_list_string_to_list_object_20(list_string: list):
+    """Chuyển list chuỗi thành list object tương ứng
+
+    Args:
+        list_string (list):
+
+    """
+    return [convert_string_to_object_4(item) for item in list_string]
+
+
+def get_classification_report_for_DLmodel_21(model, ds, class_names, batch_size):
+    """Get classification_report cho DL model
+
+    Args:
+        model (_type_): _description_
+        ds (_type_): _description_
+        class_names (_type_): _description_
+        batch_size (_type_): _description_
+
+    """
+    y_true = []
+    y_pred = []
+
+    class_names = np.asarray(class_names)
+
+    # Lặp qua các batch trong train_ds
+    for images, labels in ds:
+        # Dự đoán bằng mô hình
+        predictions = model.predict(images, batch_size=batch_size, verbose=0)
+
+        y_pred_batch = class_names[np.argmax(predictions, axis=-1)].tolist()
+        y_true_batch = class_names[np.asarray(labels)].tolist()
+        y_true += y_true_batch
+        y_pred += y_pred_batch
+
+    return metrics.classification_report(y_true, y_pred)
+
+
+def plot_train_val_metric_per_epoch_for_DLtraining(history, metric):
+    """Vẽ biểu đồ train-val metric theo từng epoch của Deep Learning model
+
+    Args:
+        history (_type_): _description_
+        metric (_type_): Chỉ số cần vẽ, vd: loss, accuracy, mse, ...
+
+    Returns:
+        fig: _description_
+    """
+    num_epochs = len(history["loss"])
+    epochs = range(1, num_epochs + 1)
+    epochs = [str(i) for i in epochs]
+
+    fig, ax = plt.subplots()
+    ax.plot(epochs, history[metric], color="gray", label=metric)
+    ax.plot(epochs, history["val_" + metric], color="blue", label="val_" + metric)
+    ax.set_ylim(bottom=0)
+
+    return fig
