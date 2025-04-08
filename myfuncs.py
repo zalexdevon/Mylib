@@ -73,7 +73,7 @@ import matplotlib.image as mpimg
 from PIL import Image
 from typing import Union
 from sklearn import metrics
-
+import random
 
 SCORINGS_PREFER_MININUM = ["log_loss", "mse", "mae"]
 SCORINGS_PREFER_MAXIMUM = ["accuracy"]
@@ -1503,7 +1503,7 @@ def get_classification_report_for_DLmodel_21(model, ds, class_names, batch_size)
     return metrics.classification_report(y_true, y_pred)
 
 
-def plot_train_val_metric_per_epoch_for_DLtraining(history, metric):
+def plot_train_val_metric_per_epoch_for_DLtraining_22(history, metric):
     """Vẽ biểu đồ train-val metric theo từng epoch của Deep Learning model
 
     Args:
@@ -1523,3 +1523,36 @@ def plot_train_val_metric_per_epoch_for_DLtraining(history, metric):
     ax.set_ylim(bottom=0)
 
     return fig
+
+
+@ensure_annotations
+def split_classification_folder_23(
+    src_dir: str, dest_dir: str, categories: list, dest_size=0.2
+):
+    """Chia classfication thư mục thành thư mục có size = **dest_size**
+
+    Thư mục classfication có dạng sau:
+    ```python
+    train/
+    ......pos/
+    ......neg/
+    ```
+
+    Args:
+        src_dir (str): Path thư mục nguồn
+        dest_dir (str): Path thư mục đích
+        categories (list): Các labels
+        dest_size (float, optional): . Defaults to 0.2.
+    """
+    for category in categories:
+        os.makedirs(os.path.join(dest_dir, category))
+        files = os.listdir(os.path.join(dest_dir, category))
+        random.Random(1337).shuffle(files)
+
+        num_dest_samples = int(dest_size * len(files))
+        dest_files = files[:num_dest_samples]
+        for file_name in dest_files:
+            shutil.move(
+                os.path.join(src_dir, category, file_name),
+                os.path.join(dest_dir, category, file_name),
+            )
