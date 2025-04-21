@@ -7,7 +7,7 @@ from tensorflow import keras
 import keras_cv
 import matplotlib.cm as cm
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
-import myfuncs
+from classifier.Mylib import myfuncs
 
 
 class ConvNetBlock_XceptionVersion(layers.Layer):

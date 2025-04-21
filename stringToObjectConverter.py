@@ -8,7 +8,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.linear_model import SGDClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from myclasses import (
+from classifier.Mylib.myclasses import (
     ConvNetBlock_XceptionVersion,
     ConvNetBlock_Advanced,
     ConvNetBlock,
