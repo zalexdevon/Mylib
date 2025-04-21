@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="Mylib",
     version="0.1",
-    packages=find_packages(),
+    packages=find_packages(where="Mylib"),
     install_requires=[
         "tensorflow==2.18.0",
         "keras-cv==0.9.0",
