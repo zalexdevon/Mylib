@@ -8,7 +8,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.linear_model import SGDClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
-from classifier.Mylib.myclasses import (
+from myclasses import (
     ConvNetBlock_XceptionVersion,
     ConvNetBlock_Advanced,
     ConvNetBlock,
@@ -18,6 +18,7 @@ from classifier.Mylib.myclasses import (
     ManyConvNetBlocks_XceptionVersion,
     ManyConvNetBlocks_Advanced,
     ManyConvNetBlocks,
+    ColumnsDeleter,
 )
 from tensorflow.keras.layers import (
     Resizing,
@@ -31,10 +32,8 @@ from tensorflow.keras.layers import (
 )
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import Input
-
 from tensorflow.keras.optimizers import RMSprop
 from sklearn.linear_model import LogisticRegression
-from classifier.Mylib.myclasses import ColumnsDeleter
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import PolynomialFeatures
 
