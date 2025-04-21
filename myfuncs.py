@@ -1616,3 +1616,7 @@ def print_hello():
 
 def di_an_trua_thoi():
     print("Giờ thì đi ăn trưa được rồi")
+
+
+def di_an_trua_thoi_aaaaaaaa():
+    print("Giờ thì đi ăn trưa được rồi")
