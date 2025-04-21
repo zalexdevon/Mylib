@@ -1,30 +1,19 @@
-from setuptools import setup, find_packages
+import setuptools
 
-setup(
-    name="Mylib",
-    version="0.1",
-    packages=find_packages(where="Mylib"),
-    install_requires=[
-        "tensorflow==2.18.0",
-        "keras-cv==0.9.0",
-        "pandas",
-        "numpy",
-        "matplotlib",
-        "mlflow==2.2.2",
-        "scikit-learn==1.3.0",  # phiên bản này phù hợp với xgboost
-        "python-box==6.0.2",
-        "pyYAML",
-        "ensure==1.0.2",
-        "types-PyYAML",
-        "plotly",
-        "seaborn",
-        "xgboost",
-        "lightgbm",
-        "imbalanced-learn",
-    ],
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
+REPO_NAME = "Mylib"  # tên của github repo
+AUTHOR_USER_NAME = "zalexdevon"  # tên của tài khoản github
+AUTHOR_EMAIL = "trantamch112358@gmail.com"  # email đăng kí github
+
+__version__ = "0.0.0"
+
+setuptools.setup(
+    name=REPO_NAME,
+    version=__version__,
+    author=AUTHOR_USER_NAME,
+    author_email=AUTHOR_EMAIL,
+    url=f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}",
+    project_urls={
+        "Bug Tracker": f"https://github.com/{AUTHOR_USER_NAME}/{REPO_NAME}/issues",
+    },
+    packages=setuptools.find_packages(),
 )
