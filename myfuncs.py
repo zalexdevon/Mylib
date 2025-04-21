@@ -1608,15 +1608,3 @@ def get_confusion_matrix_heatmap_29(model, feature, target, class_names: list):
     )
 
     return fig
-
-
-def print_hello():
-    print("hello world")
-
-
-def di_an_trua_thoi():
-    print("Giờ thì đi ăn trưa được rồi")
-
-
-def di_an_trua_thoi_aaaaaaaa():
-    print("Giờ thì đi ăn trưa được rồi")
