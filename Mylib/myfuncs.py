@@ -10,14 +10,11 @@ import math
 from box.exceptions import BoxValueError
 import yaml
 import json
-import joblib
-from ensure import ensure_annotations
 from box import ConfigBox
 from pathlib import Path
 from typing import Any
 import base64
 import pickle
-import plotly.express as px
 import pandas as pd
 import os
 from sklearn.model_selection import PredefinedSplit
@@ -49,7 +46,6 @@ def get_sum(a, b):
     return a + b
 
 
-@ensure_annotations
 def get_index_of_outliers(data: Union[np.ndarray, list]):
     """Lấy **index** các giá trị outlier nằm ngoài khoảng Q1 - 1.5*IQR và Q3 + 1.5*IQR
 
@@ -72,7 +68,6 @@ def get_index_of_outliers(data: Union[np.ndarray, list]):
     return result
 
 
-@ensure_annotations
 def get_index_of_outliers_on_series(data: pd.Series):
     """Lấy **index** các giá trị outlier nằm ngoài khoảng Q1 - 1.5*IQR và Q3 + 1.5*IQR
 
@@ -94,7 +89,6 @@ def get_index_of_outliers_on_series(data: pd.Series):
     return result
 
 
-@ensure_annotations
 def get_exact_day(seconds_since_epoch: int):
     """Get the exact day from 1/1/1970
 
@@ -109,7 +103,6 @@ def get_exact_day(seconds_since_epoch: int):
     return epoch + timedelta(seconds=seconds_since_epoch)
 
 
-@ensure_annotations
 def is_number(string_to_check: str):
     """Check if string_to_check is a number"""
 
@@ -120,7 +113,6 @@ def is_number(string_to_check: str):
         return False
 
 
-@ensure_annotations
 def is_integer_str(s: str):
     """Check if str is an integer
 
@@ -132,7 +124,6 @@ def is_integer_str(s: str):
     return bool(re.match(regex, s))
 
 
-@ensure_annotations
 def is_natural_number_str(s: str):
     """Check if str is a natural_number
 
@@ -144,7 +135,6 @@ def is_natural_number_str(s: str):
     return re.match(regex, s) is not None
 
 
-@ensure_annotations
 def is_natural_number(num: numbers.Real):
     """Check if num is a natural number
 
@@ -156,7 +146,6 @@ def is_natural_number(num: numbers.Real):
     return is_integer(num) and num >= 0
 
 
-@ensure_annotations
 def is_integer(number: numbers.Real):
     """Check if number is a integer
 
@@ -263,7 +252,6 @@ def fetch_source_url_to_zip_file(source_url, local_zip_path):
     return filename, headers
 
 
-@ensure_annotations
 def split_numpy_array(
     data: np.ndarray, ratios: list, dimension=1, shuffle: bool = True
 ):
@@ -301,7 +289,6 @@ def split_numpy_array(
     )
 
 
-@ensure_annotations
 def split_dataframe_data(data: pd.DataFrame, ratios: list, shuffle: bool = True):
     """
 
@@ -419,7 +406,6 @@ def get_range_for_param(param_str):
     return [num_min, num_mean, num_max]
 
 
-@ensure_annotations
 def generate_grid_search_params(param_grid: dict):
     """Generate all combinations of params like grid search
 
@@ -484,7 +470,6 @@ def get_features_target_spliter_for_CV_train_train(train_features, train_target)
     return features, target, spliter
 
 
-@ensure_annotations
 def read_yaml(path_to_yaml: str) -> ConfigBox:
     """reads yaml file and returns
 
@@ -509,7 +494,6 @@ def read_yaml(path_to_yaml: str) -> ConfigBox:
         raise e
 
 
-@ensure_annotations
 def create_directories(path_to_directories: list, verbose=True):
     """create list of directories
 
@@ -525,7 +509,6 @@ def create_directories(path_to_directories: list, verbose=True):
             print(f"created directory at: {path}")
 
 
-@ensure_annotations
 def save_json(path: Path, data: dict):
     """save json data
 
@@ -540,7 +523,6 @@ def save_json(path: Path, data: dict):
     print(f"json file saved at {path}")
 
 
-@ensure_annotations
 def load_json(path: Path) -> ConfigBox:
     """load json files data
 
@@ -557,7 +539,6 @@ def load_json(path: Path) -> ConfigBox:
     return ConfigBox(content)
 
 
-@ensure_annotations
 def save_bin(data: Any, path: Path):
     """save binary file
 
@@ -569,7 +550,6 @@ def save_bin(data: Any, path: Path):
     print(f"binary file saved at: {path}")
 
 
-@ensure_annotations
 def load_bin(path: Path) -> Any:
     """load binary data
 
@@ -584,7 +564,6 @@ def load_bin(path: Path) -> Any:
     return data
 
 
-@ensure_annotations
 def get_size_inKB(path: Path) -> str:
     """get size in KB
 
@@ -888,56 +867,6 @@ def get_describe_stats_for_numeric_cat_cols(data):
     return result
 
 
-# def convert_string_to_object_4(text: str):
-#     """Chuyển 1 chuỗi thành 1 đối tượng
-
-#     Example:
-#         text = "LogisticRegression(C=144, penalty=l1, solver=saga,max_iter=10000,dual=True)"
-
-#         -> đối tượng LogisticRegression(C=144, dual=True, max_iter=10000, penalty='l1',solver='saga')
-
-#     Args:
-#         text (str): _description_
-
-
-#     """
-#     # Tách tên lớp và tham số
-#     class_name, params = text.split("(", 1)
-#     params = params[:-1]
-
-#     object_class = globals()[class_name]
-
-#     if params == "":
-#         return object_class()
-
-#     # Lấy tham số của đối tượng
-#     param_parts = params.split(",")
-#     param_parts = [item.strip() for item in param_parts]
-#     keys = [item.split("=")[0].strip() for item in param_parts]
-
-#     values = [
-#         do_ast_literal_eval_advanced_7(item.strip().split("=")[1].strip())
-#         for item in param_parts
-#     ]
-
-#     params = dict(zip(keys, values))
-
-#     return object_class(**params)
-
-
-# def do_ast_literal_eval_advanced_7(text: str):
-#     """Kế thừa hàm ast.literal_eval() nhưng xử lí thêm trường hợp sau
-
-#     Tuple, List dạng (1.0 ; 2.0), các phần tử cách nhau bởi dấu ; thay vì dấu ,
-
-#     """
-#     if ";" not in text:
-#         return ast.literal_eval(text)
-
-#     return ast.literal_eval(text.replace(";", ","))
-
-
-@ensure_annotations
 def do_list_subtraction_3(a: list, b: list):
     """Thực hiện trừ a cho b
 
@@ -963,7 +892,6 @@ def do_list_subtraction_3(a: list, b: list):
     return result
 
 
-@ensure_annotations
 def get_different_types_cols_from_df_4(df: pd.DataFrame):
     """Tìm các cột kiểu numeric, numericCat, cat, binary, nominal, ordinal  target từ df
 
@@ -1078,212 +1006,209 @@ def get_object_from_string_using_eval_6(text: str, module):
     return eval(f"class_name({params})")
 
 
-@ensure_annotations
-def plot_many_lines_on_1plane_7(
-    df: pd.DataFrame,
-    id_var: str,
-    value_vars: list,
-    color_value_vars: list,
-    xaxis_title=None,
-    yaxis_title=None,
-):
-    """Vẽ biểu đồ multiple lines
+# def plot_many_lines_on_1plane_7(
+#     df: pd.DataFrame,
+#     id_var: str,
+#     value_vars: list,
+#     color_value_vars: list,
+#     xaxis_title=None,
+#     yaxis_title=None,
+# ):
+#     """Vẽ biểu đồ multiple lines
 
-    Examples:
-        |Ngày | Hạng A | Hạng B |
-        |---|---|---|
-        |1|15|16|
-        |2|10|20|
-        |3|20|40|
-        |4|30|90|
+#     Examples:
+#         |Ngày | Hạng A | Hạng B |
+#         |---|---|---|
+#         |1|15|16|
+#         |2|10|20|
+#         |3|20|40|
+#         |4|30|90|
 
-        Khi đó vẽ biểu đồ thể hiện doanh thu các hạng theo từng ngày
+#         Khi đó vẽ biểu đồ thể hiện doanh thu các hạng theo từng ngày
 
-        ```python
-        plot_many_lines_on_1plane_7(df, 'Ngày', ['Hạng A','Hạng B'], ['blue', 'gray'])
-        ```
-
-
-    Args:
-        df (pd.DataFrame): Dữ liệu chứa các cột cần vẽ
-        id_var (str): Tên cột mà sẽ ở trục **x**
-        value_vars (list): Tên các cột sẽ hiện thành đường
-        color_value_vars (list): Màu ứng với các đường
-        xaxis_title (list): Title cho trục x
-        yaxis_title (list): Title cho trục y
-
-    Returns:
-        _type_: Đối tượng **fig** để sau này lưu file, ...
-    """
-
-    # Chuyển đổi dữ liệu từ wide format sang long format
-    df_long = df.melt(
-        id_vars=[id_var], value_vars=value_vars, var_name="Category", value_name="y"
-    )
-
-    fig = px.line(
-        df_long,
-        x=id_var,
-        y="y",
-        color="Category",
-        markers=True,
-        color_discrete_map=dict(zip(value_vars, color_value_vars)),
-    )
-
-    xaxis_title = id_var if xaxis_title is None else xaxis_title
-    yaxis_title = "y" if yaxis_title is None else yaxis_title
-
-    fig.update_layout(
-        xaxis_title=xaxis_title,
-        yaxis_title=yaxis_title,
-    )
-
-    print("Đã cập nhật")
-
-    return fig
+#         ```python
+#         plot_many_lines_on_1plane_7(df, 'Ngày', ['Hạng A','Hạng B'], ['blue', 'gray'])
+#         ```
 
 
-@ensure_annotations
-def plot_grouped_bar_chart_8(
-    df: pd.DataFrame,
-    id_var,
-    value_vars,
-    xaxis_title=None,
-    yaxis_title=None,
-):
-    """Vẽ biểu đồ grouped bar chart
+#     Args:
+#         df (pd.DataFrame): Dữ liệu chứa các cột cần vẽ
+#         id_var (str): Tên cột mà sẽ ở trục **x**
+#         value_vars (list): Tên các cột sẽ hiện thành đường
+#         color_value_vars (list): Màu ứng với các đường
+#         xaxis_title (list): Title cho trục x
+#         yaxis_title (list): Title cho trục y
 
-    Examples:
-        |Ngày | Hạng A | Hạng B |
-        |---|---|---|
-        |1|15|16|
-        |2|10|20|
-        |3|20|40|
-        |4|30|90|
+#     Returns:
+#         _type_: Đối tượng **fig** để sau này lưu file, ...
+#     """
 
-        Khi đó vẽ biểu đồ thể hiện doanh thu các hạng theo từng ngày, mỗi ngày sẽ có 2 cột ứng với 2 hạng A, B
+#     # Chuyển đổi dữ liệu từ wide format sang long format
+#     df_long = df.melt(
+#         id_vars=[id_var], value_vars=value_vars, var_name="Category", value_name="y"
+#     )
 
-        ```python
-        plot_grouped_bar_chart_8(df, 'Ngày', ['Hạng A','Hạng B'])
-        ```
+#     fig = px.line(
+#         df_long,
+#         x=id_var,
+#         y="y",
+#         color="Category",
+#         markers=True,
+#         color_discrete_map=dict(zip(value_vars, color_value_vars)),
+#     )
 
+#     xaxis_title = id_var if xaxis_title is None else xaxis_title
+#     yaxis_title = "y" if yaxis_title is None else yaxis_title
 
-    Args:
-        df (pd.DataFrame): Dữ liệu chứa các cột cần vẽ
-        id_var (str): Tên cột mà sẽ ở trục **x**
-        value_vars (list): Tên các cột sẽ hiện thành đường
-        xaxis_title (list): Title cho trục x
-        yaxis_title (list): Title cho trục y
+#     fig.update_layout(
+#         xaxis_title=xaxis_title,
+#         yaxis_title=yaxis_title,
+#     )
 
-    Returns:
-        _type_: Đối tượng **fig** để sau này lưu file, ...
-    """
-    # Chuyển đổi dữ liệu sang định dạng dài (long format)
-    data_melted = df.melt(
-        id_vars=[id_var],
-        value_vars=value_vars,
-        var_name="Category",
-        value_name="y",
-    )
+#     print("Đã cập nhật")
 
-    # Vẽ Grouped Bar Chart
-    fig = px.bar(
-        data_melted,
-        x=id_var,
-        y="y",
-        color="Category",  # Màu sắc theo năm
-        barmode="group",  # Hiển thị dạng cột nhóm
-    )
-
-    xaxis_title = id_var if xaxis_title is None else xaxis_title
-    yaxis_title = "y" if yaxis_title is None else yaxis_title
-
-    fig.update_layout(
-        xaxis_title=xaxis_title,
-        yaxis_title=yaxis_title,
-    )
-
-    return fig
+#     return fig
 
 
-@ensure_annotations
-def plot_radar_chart_9(categories: list, values: list):
-    """Vẽ radar chart
+# def plot_grouped_bar_chart_8(
+#     df: pd.DataFrame,
+#     id_var,
+#     value_vars,
+#     xaxis_title=None,
+#     yaxis_title=None,
+# ):
+#     """Vẽ biểu đồ grouped bar chart
 
-    Examples:
-    ```python
-    categories = ['Kỹ năng A', 'Kỹ năng B', 'Kỹ năng C', 'Kỹ năng D', 'Kỹ năng E']
-    values = [80, 90, 70, 85, 60]
-    ```
+#     Examples:
+#         |Ngày | Hạng A | Hạng B |
+#         |---|---|---|
+#         |1|15|16|
+#         |2|10|20|
+#         |3|20|40|
+#         |4|30|90|
 
-    Returns:
-        _type_: Đối tượng **fig**
-    """
+#         Khi đó vẽ biểu đồ thể hiện doanh thu các hạng theo từng ngày, mỗi ngày sẽ có 2 cột ứng với 2 hạng A, B
 
-    values += values[:1]
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatterpolar(
-            r=values,
-            theta=categories,
-            fill="toself",
-        )
-    )
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(
-                visible=True, range=[0, 100]
-            )  # Hiển thị trục và đặt giới hạn
-        ),
-    )
-
-    return fig
+#         ```python
+#         plot_grouped_bar_chart_8(df, 'Ngày', ['Hạng A','Hạng B'])
+#         ```
 
 
-def plot_full100percent_area_chart_10(df: pd.DataFrame, time_col, group, value):
-    """Vẽ biểu đồ full 100% area chart
+#     Args:
+#         df (pd.DataFrame): Dữ liệu chứa các cột cần vẽ
+#         id_var (str): Tên cột mà sẽ ở trục **x**
+#         value_vars (list): Tên các cột sẽ hiện thành đường
+#         xaxis_title (list): Title cho trục x
+#         yaxis_title (list): Title cho trục y
 
-    Examples:
-    ```python
-    data = pd.DataFrame({
-        "Thời gian": ["Q1", "Q2", "Q3", "Q4"] * 3,
-        "Nhóm": ["A"] * 4 + ["B"] * 4 + ["C"] * 4,
-        "Giá trị": np.random.randint(10, 100, 12)
-    })
-    ```
+#     Returns:
+#         _type_: Đối tượng **fig** để sau này lưu file, ...
+#     """
+#     # Chuyển đổi dữ liệu sang định dạng dài (long format)
+#     data_melted = df.melt(
+#         id_vars=[id_var],
+#         value_vars=value_vars,
+#         var_name="Category",
+#         value_name="y",
+#     )
 
-    Vẽ biểu đồ miền thể hiện tỉ trọng của từng **Nhóm** qua từng **Thời gian** (Các quý Q1, Q2, ...)
+#     # Vẽ Grouped Bar Chart
+#     fig = px.bar(
+#         data_melted,
+#         x=id_var,
+#         y="y",
+#         color="Category",  # Màu sắc theo năm
+#         barmode="group",  # Hiển thị dạng cột nhóm
+#     )
 
-    ```python
-    plot_full100percent_area_chart(data, "Thời gian", "Nhóm", "Giá trị")
-    ```
+#     xaxis_title = id_var if xaxis_title is None else xaxis_title
+#     yaxis_title = "y" if yaxis_title is None else yaxis_title
+
+#     fig.update_layout(
+#         xaxis_title=xaxis_title,
+#         yaxis_title=yaxis_title,
+#     )
+
+#     return fig
 
 
-    Args:
-        df (pd.DataFrame): _description_
-        time_col (_type_): Tên cột ở trục x, thông thường là thời gian
-        group (_type_): Tên cột chứa category được chia ra trong biểu đồ
-        value (_type_): Tên cột giá trị
+# def plot_radar_chart_9(categories: list, values: list):
+#     """Vẽ radar chart
 
-    Returns:
-        _type_: Đối tượng **fig**
-    """
+#     Examples:
+#     ```python
+#     categories = ['Kỹ năng A', 'Kỹ năng B', 'Kỹ năng C', 'Kỹ năng D', 'Kỹ năng E']
+#     values = [80, 90, 70, 85, 60]
+#     ```
 
-    # Tính tổng ứng với mỗi điểm trục X
-    data_grouped = df.groupby(time_col)[value].transform("sum")
+#     Returns:
+#         _type_: Đối tượng **fig**
+#     """
 
-    # Tính tỷ lệ phần trăm cho từng nhóm
-    df["percent"] = (df[value] / data_grouped) * 100
+#     values += values[:1]
+#     fig = go.Figure()
+#     fig.add_trace(
+#         go.Scatterpolar(
+#             r=values,
+#             theta=categories,
+#             fill="toself",
+#         )
+#     )
+#     fig.update_layout(
+#         polar=dict(
+#             radialaxis=dict(
+#                 visible=True, range=[0, 100]
+#             )  # Hiển thị trục và đặt giới hạn
+#         ),
+#     )
 
-    # Vẽ Full 100% Area Chart
-    fig = px.area(
-        df,
-        x=time_col,
-        y="percent",
-        color=group,
-    )
+#     return fig
 
-    return fig
+
+# def plot_full100percent_area_chart_10(df: pd.DataFrame, time_col, group, value):
+#     """Vẽ biểu đồ full 100% area chart
+
+#     Examples:
+#     ```python
+#     data = pd.DataFrame({
+#         "Thời gian": ["Q1", "Q2", "Q3", "Q4"] * 3,
+#         "Nhóm": ["A"] * 4 + ["B"] * 4 + ["C"] * 4,
+#         "Giá trị": np.random.randint(10, 100, 12)
+#     })
+#     ```
+
+#     Vẽ biểu đồ miền thể hiện tỉ trọng của từng **Nhóm** qua từng **Thời gian** (Các quý Q1, Q2, ...)
+
+#     ```python
+#     plot_full100percent_area_chart(data, "Thời gian", "Nhóm", "Giá trị")
+#     ```
+
+
+#     Args:
+#         df (pd.DataFrame): _description_
+#         time_col (_type_): Tên cột ở trục x, thông thường là thời gian
+#         group (_type_): Tên cột chứa category được chia ra trong biểu đồ
+#         value (_type_): Tên cột giá trị
+
+#     Returns:
+#         _type_: Đối tượng **fig**
+#     """
+
+#     # Tính tổng ứng với mỗi điểm trục X
+#     data_grouped = df.groupby(time_col)[value].transform("sum")
+
+#     # Tính tỷ lệ phần trăm cho từng nhóm
+#     df["percent"] = (df[value] / data_grouped) * 100
+
+#     # Vẽ Full 100% Area Chart
+#     fig = px.area(
+#         df,
+#         x=time_col,
+#         y="percent",
+#         color=group,
+#     )
+
+#     return fig
 
 
 def show_img_11(img_path):
@@ -1299,7 +1224,6 @@ def show_img_11(img_path):
     ax.axis("off")
 
 
-@ensure_annotations
 def convert_numpy_image_array_to_jpg_files_12(
     numpy_array: np.ndarray, folder_path: str
 ):
@@ -1316,7 +1240,6 @@ def convert_numpy_image_array_to_jpg_files_12(
         image.save(f"{folder_path}/image_{idx}.jpg")
 
 
-@ensure_annotations
 def convert_pdDataframe_to_tfDataset_13(
     df: pd.DataFrame, target_col: str, batch_size: int
 ):
@@ -1342,7 +1265,6 @@ def convert_pdDataframe_to_tfDataset_13(
     return dataset
 
 
-@ensure_annotations
 def get_different_types_feature_cols_from_df_14(df: pd.DataFrame):
     """Tìm các cột kiểu numeric, numericCat, cat, binary, nominal, ordinal từ df
 
@@ -1489,7 +1411,6 @@ def plot_train_val_metric_per_epoch_for_DLtraining_22(history, metric):
     return fig
 
 
-@ensure_annotations
 def split_classification_folder_23(
     src_dir: str, dest_dir: str, categories: list, dest_size=0.2
 ):
@@ -1547,7 +1468,6 @@ def get_feature_cols_and_target_col_from_df_27(df):
     return feature_cols, target_col
 
 
-@ensure_annotations
 def get_value_with_the_meaning_28(scores: tuple, scoring):
     """Get chỉ số theo ý nghĩa
 
@@ -1623,3 +1543,11 @@ def get_heatmap_for_confusion_matrix_30(confusion_matrix, labels):
     )
 
     return fig
+
+
+def complete_mylib_notebook():
+    print("Đã tách được Mylib như là một quần thể độc lập trên notebook")
+
+
+def giu_1_phien_ban_thoi():
+    print("Đã giữ được 1 phiên bản")

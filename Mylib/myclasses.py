@@ -4,10 +4,11 @@ import tensorflow as tf
 import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow import keras
-import keras_cv
+
+# import keras_cv
 import matplotlib.cm as cm
 from sklearn.base import BaseEstimator, TransformerMixin, ClassifierMixin
-from classifier.Mylib import myfuncs
+from Mylib import myfuncs
 from sklearn import metrics
 
 
@@ -252,84 +253,86 @@ class ImageDataPositionAugmentation(layers.Layer):
         return cls(**config)
 
 
-class ImageDataColorAugmentation(layers.Layer):
-    """Tăng cường dữ liệu hình ảnh ở khía cạnh màu sắc, bao gồm các lớp sau (**trong keras_cv.layers**)
-    - RandomBrightness
-    - RandomGaussianBlur
-    - RandomContrast
-    - RandomHue
-    - RandomSaturation
+# class ImageDataColorAugmentation(layers.Layer):
+#     """Tăng cường dữ liệu hình ảnh ở khía cạnh màu sắc, bao gồm các lớp sau (**trong keras_cv.layers**)
+#     - RandomBrightness
+#     - RandomGaussianBlur
+#     - RandomContrast
+#     - RandomHue
+#     - RandomSaturation
 
-    Attributes:
-        brightness_factor (float, optional): factor cho RandomBrightness. Defaults to 0.2.
-        contrast_factor (float, optional): factor cho RandomContrast. Defaults to 0.2.
-        hue_factor (float, optional): factor cho RandomHue. Defaults to 0.2.
-        saturation_factor (float, optional): factor cho RandomSaturation. Defaults to 0.2.
-    """
+#     Attributes:
+#         brightness_factor (float, optional): factor cho RandomBrightness. Defaults to 0.2.
+#         contrast_factor (float, optional): factor cho RandomContrast. Defaults to 0.2.
+#         hue_factor (float, optional): factor cho RandomHue. Defaults to 0.2.
+#         saturation_factor (float, optional): factor cho RandomSaturation. Defaults to 0.2.
+#     """
 
-    def __init__(
-        self,
-        brightness_factor=0.2,
-        contrast_factor=0.2,
-        hue_factor=0.2,
-        saturation_factor=0.2,
-        **kwargs,
-    ):
-        # super(ImageDataColorAugmentation, self).__init__()
-        super().__init__(**kwargs)
-        self.brightness_factor = brightness_factor
-        self.contrast_factor = contrast_factor
-        self.hue_factor = hue_factor
-        self.saturation_factor = saturation_factor
+#     def __init__(
+#         self,
+#         brightness_factor=0.2,
+#         contrast_factor=0.2,
+#         hue_factor=0.2,
+#         saturation_factor=0.2,
+#         **kwargs,
+#     ):
+#         # super(ImageDataColorAugmentation, self).__init__()
+#         super().__init__(**kwargs)
+#         self.brightness_factor = brightness_factor
+#         self.contrast_factor = contrast_factor
+#         self.hue_factor = hue_factor
+#         self.saturation_factor = saturation_factor
 
-    def build(self, input_shape):
-        self.RandomBrightness = keras_cv.layers.RandomBrightness(
-            factor=self.brightness_factor
-        )
-        self.RandomGaussianBlur = keras_cv.layers.RandomGaussianBlur(
-            kernel_size=3, factor=(0.0, 1.0)
-        )
-        self.RandomContrast = keras_cv.layers.RandomContrast(
-            factor=self.contrast_factor,
-            value_range=(1 - self.contrast_factor, 1 + self.contrast_factor),
-        )
-        self.RandomHue = keras_cv.layers.RandomHue(
-            factor=self.hue_factor,
-            value_range=(1 - self.hue_factor, 1 + self.hue_factor),
-        )
-        self.RandomSaturation = keras_cv.layers.RandomSaturation(
-            factor=self.saturation_factor
-        )
+#     def build(self, input_shape):
+#         self.RandomBrightness = keras_cv.layers.RandomBrightness(
+#             factor=self.brightness_factor
+#         )
+#         self.RandomGaussianBlur = keras_cv.layers.RandomGaussianBlur(
+#             kernel_size=3, factor=(0.0, 1.0)
+#         )
+#         self.RandomContrast = keras_cv.layers.RandomContrast(
+#             factor=self.contrast_factor,
+#             value_range=(1 - self.contrast_factor, 1 + self.contrast_factor),
+#         )
+#         self.RandomHue = keras_cv.layers.RandomHue(
+#             factor=self.hue_factor,
+#             value_range=(1 - self.hue_factor, 1 + self.hue_factor),
+#         )
+#         self.RandomSaturation = keras_cv.layers.RandomSaturation(
+#             factor=self.saturation_factor
+#         )
 
-        super().build(input_shape)
+#         super().build(input_shape)
 
-    def call(self, x):
-        x = self.RandomBrightness(x)
-        x = self.RandomGaussianBlur(x)  # Lớp này để mặc định
-        x = self.RandomContrast(x)
-        x = self.RandomHue(x)
-        x = self.RandomSaturation(x)
+#     def call(self, x):
+#         x = self.RandomBrightness(x)
+#         x = self.RandomGaussianBlur(x)  # Lớp này để mặc định
+#         x = self.RandomContrast(x)
+#         x = self.RandomHue(x)
+#         x = self.RandomSaturation(x)
 
-        return x
+#         return x
 
-    def get_config(self):
-        # Trả về cấu hình của lớp tùy chỉnh, bao gồm cả tham số trainable và dtype
-        config = super().get_config()
-        config.update(
-            {
-                "brightness_factor": self.brightness_factor,
-                "contrast_factor": self.contrast_factor,
-                "hue_factor": self.hue_factor,
-                "saturation_factor": self.saturation_factor,
-            }
-        )
-        return config
 
-    @classmethod
-    def from_config(cls, config):
-        # Loại bỏ tham số 'name' từ config (vì Keras đã xử lý nó)
-        name = config.pop("name", None)
-        return cls(**config)
+#     def get_config(self):
+#         # Trả về cấu hình của lớp tùy chỉnh, bao gồm cả tham số trainable và dtype
+#         config = super().get_config()
+#         config.update(
+#             {
+#                 "brightness_factor": self.brightness_factor,
+#                 "contrast_factor": self.contrast_factor,
+#                 "hue_factor": self.hue_factor,
+#                 "saturation_factor": self.saturation_factor,
+#             }
+#         )
+#         return config
+
+
+#     @classmethod
+#     def from_config(cls, config):
+#         # Loại bỏ tham số 'name' từ config (vì Keras đã xử lý nó)
+#         name = config.pop("name", None)
+#         return cls(**config)
 
 
 class PretrainedModel(layers.Layer):
@@ -823,18 +826,25 @@ class ClassifierEvaluator:
         self.val_target_data = val_target_data
 
     def evaluate_train_classifier(self):
+        # Dự đoán
         train_pred = self.model.predict(self.train_feature_data)
+        train_pred = [int(item) for item in train_pred]
+
         val_pred = self.model.predict(self.val_feature_data)
+        val_pred = [int(item) for item in val_pred]
 
         # Accuracy
         train_accuracy = metrics.accuracy_score(self.train_target_data, train_pred)
         val_accuracy = metrics.accuracy_score(self.val_target_data, val_pred)
 
         # Classification report
-        class_names = np.asarray(class_names)
-        named_train_target_data = class_names[self.train_target_data]
+        class_names = np.asarray(self.class_names)
+        train_target_data = [int(item) for item in self.train_target_data]
+        val_target_data = [int(item) for item in self.val_target_data]
+
+        named_train_target_data = class_names[train_target_data]
         named_train_pred = class_names[train_pred]
-        named_val_target_data = class_names[self.val_target_data]
+        named_val_target_data = class_names[val_target_data]
         named_val_pred = class_names[val_pred]
 
         train_classification_report = metrics.classification_report(
@@ -874,13 +884,16 @@ class ClassifierEvaluator:
 
     def evaluate_test_classifier(self):
         test_pred = self.model.predict(self.train_feature_data)
+        test_pred = [int(item) for item in test_pred]
 
         # Accuracy
         test_accuracy = metrics.accuracy_score(self.train_target_data, test_pred)
 
         # Classification report
-        class_names = np.asarray(class_names)
-        named_train_target_data = class_names[self.train_target_data]
+        class_names = np.asarray(self.class_names)
+        train_target_data = [int(item) for item in self.train_target_data]
+
+        named_train_target_data = class_names[train_target_data]
         named_train_pred = class_names[test_pred]
 
         test_classification_report = metrics.classification_report(
