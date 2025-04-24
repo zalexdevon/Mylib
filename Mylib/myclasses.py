@@ -1100,6 +1100,6 @@ class CustomStackingClassifier(BaseEstimator, ClassifierMixin):
         list_predict_proba = [
             estimator.predict_proba(X) for estimator in self.estimators
         ]
-        new_feature = np.hstack(*list_predict_proba)
+        new_feature = np.hstack(list_predict_proba)
 
         return new_feature

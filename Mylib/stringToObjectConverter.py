@@ -97,15 +97,12 @@ def convert_complex_MLmodel_yaml_to_object(yaml):
     ```
     models:
         -
-            - CustomStackingClassifier
-            -
-                estimators:
-                    - LogisticRegression(C = 1.0)
-                    - GaussianNB(var_smoothing=1e-8)
-                    - SGDClassifier(alpha=10)
-                    - XGBClassifier(n_estimators=10, max_depth=5)
-                final_estimator: XGBClassifier(n_estimators=10, max_depth=5)
-        - LogisticRegression(C = 1.0)
+            class_name: CustomStackingClassifier
+            estimators:
+                - LogisticRegression(C = 0.1)
+                - GaussianNB(var_smoothing=1e-8)
+                - SGDClassifier(alpha=10, loss='log_loss')
+            final_estimator: LogisticRegression(C = 0.1)
     ```
 
     ở đây có 2 loại model:
@@ -119,13 +116,13 @@ def convert_complex_MLmodel_yaml_to_object(yaml):
         model: _description_
     """
 
-    if isinstance(yaml, list):
+    if isinstance(yaml, dict):
         return convert_CustomStackingClassifier_yaml_to_object(yaml)
 
     return convert_ML_model_string_to_object_4(yaml)
 
 
-def convert_CustomStackingClassifier_yaml_to_object(yaml: list):
+def convert_CustomStackingClassifier_yaml_to_object(yaml: dict):
     """Get model CustomStackingClassifier từ yaml
 
     yaml có định dạng sau
@@ -146,20 +143,12 @@ def convert_CustomStackingClassifier_yaml_to_object(yaml: list):
     Returns:
         model: _description_
     """
-    class_name = yaml[0]
-    object_class = globals()[class_name]
+    estimators = yaml.estimators
+    estimators = [convert_ML_model_string_to_object_4(item) for item in estimators]
 
-    params = yaml[1]
+    final_estimator = yaml.final_estimator
+    final_estimator = convert_ML_model_string_to_object_4(final_estimator)
 
-    new_values = []
-    for value in params.values():
-        if isinstance(value, list):
-            value = [convert_ML_model_string_to_object_4(item) for item in value]
-        else:
-            value = convert_ML_model_string_to_object_4(value)
-
-        new_values.append(value)
-
-    params = dict(zip(params.keys(), new_values))
-
-    return object_class(**params)
+    return CustomStackingClassifier(
+        estimators=estimators, final_estimator=final_estimator
+    )

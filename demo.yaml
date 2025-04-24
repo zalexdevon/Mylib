@@ -1,11 +1,9 @@
 models: 
   -
-    - CustomStackingClassifier
-    - 
-      estimators: 
-        - LogisticRegression(C = 1.0)
-        - GaussianNB(var_smoothing=1e-8)
-        - SGDClassifier(alpha=10)
-        - XGBClassifier(n_estimators=10, max_depth=5)
-      final_estimator: XGBClassifier(n_estimators=10, max_depth=5)
-  - LogisticRegression(C = 1.0)
+    class_name: CustomStackingClassifier
+    estimators: 
+          - LogisticRegression(C = 0.1)
+          - GaussianNB(var_smoothing=1e-8)
+          - SGDClassifier(alpha=10, loss='log_loss')
+    final_estimator: LogisticRegression(C = 0.1)
+  - LogisticRegression(C = 0.1)

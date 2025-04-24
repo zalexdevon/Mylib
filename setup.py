@@ -4,7 +4,7 @@ with open("README.md", mode="r") as file:
     description = file.read()
 
 MYLIB_NAME = "zzzz_mylib_23_4"
-__version__ = "0.21"  # Chỉnh phiên bản ở đây sau mỗi lần sửa code
+__version__ = "0.23"  # Chỉnh phiên bản ở đây sau mỗi lần sửa code
 
 REQUIRED_LIBS = [
     # "tensorflow==2.18.0",  # Phiên bản ổn định của TensorFlow

@@ -1545,9 +1545,18 @@ def get_heatmap_for_confusion_matrix_30(confusion_matrix, labels):
     return fig
 
 
-def complete_mylib_notebook():
-    print("Đã tách được Mylib như là một quần thể độc lập trên notebook")
+def get_model_desc_for_CustomStackingClassifier_31(model_desc: dict):
+    res = f"class_name: {model_desc['class_name']}\n"
+    res += "estimators:\n"
+    space = "   "
+    for item in model_desc["estimators"]:
+        res += f"{space}- {item}\n"
+    res += f"final_estimator: {model_desc['final_estimator']}"
+    return res
 
 
-def giu_1_phien_ban_thoi():
-    print("Đã giữ được 1 phiên bản")
+def get_model_desc_for_model_32(model_desc):
+    if isinstance(model_desc, dict):
+        return get_model_desc_for_CustomStackingClassifier_31(model_desc)
+
+    return model_desc
