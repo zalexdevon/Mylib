@@ -1,25 +1,29 @@
 import ast
-from sklearn.ensemble import (
-    RandomForestClassifier,
-    GradientBoostingClassifier,
-    ExtraTreesClassifier,
+from tensorflow.keras.layers import (
+    Resizing,
+    Rescaling,
+    Conv2D,
+    MaxPooling2D,
+    Flatten,
+    Dense,
+    GlobalAveragePooling2D,
+    Dropout,
 )
-from sklearn.svm import SVC, LinearSVC
-from sklearn.linear_model import SGDClassifier
-from xgboost import XGBClassifier
-from lightgbm import LGBMClassifier
-from Mylib.myclasses import (
-    ColumnsDeleter,
-    CustomStackingClassifier,
-    IncrementalPCA,
-    BatchRBFKernelPCA,
+
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras import Input
+from tensorflow.keras.optimizers import RMSprop
+from Mylib.tf_myclasses import (
+    ConvNetBlock_XceptionVersion,
+    ConvNetBlock_Advanced,
+    ConvNetBlock,
+    ImageDataPositionAugmentation,
+    PretrainedModel,
+    ManyConvNetBlocks_XceptionVersion,
+    ManyConvNetBlocks_Advanced,
+    ManyConvNetBlocks,
 )
-from sklearn.linear_model import LogisticRegression
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
+from Mylib.myclasses import CustomStackingClassifier
 
 
 def do_ast_literal_eval_advanced_7(text: str):
@@ -44,6 +48,7 @@ def convert_ML_model_string_to_object_4(text: str):
 
     Args:
         text (str): _description_
+
 
     """
     # Tách tên lớp và tham số
@@ -70,7 +75,7 @@ def convert_ML_model_string_to_object_4(text: str):
     return object_class(**params)
 
 
-def convert_MLmodel_yaml_to_object(yaml):
+def convert_complex_MLmodel_yaml_to_object(yaml):
     """Chuyển một yaml thành một ML model
 
     Examples:
@@ -110,13 +115,12 @@ def convert_CustomStackingClassifier_yaml_to_object(yaml: dict):
     ```
     - CustomStackingClassifier
     -
-        estimators:
-            - LogisticRegression(C = 1.0)
-            - GaussianNB(var_smoothing=1e-8)
-            - SGDClassifier(alpha=10)
-            - XGBClassifier(n_estimators=10, max_depth=5)
-        weights: [1,1,2,3]
-        final_estimator: XGBClassifier(n_estimators=10, max_depth=5)
+      estimators:
+        - LogisticRegression(C = 1.0)
+        - GaussianNB(var_smoothing=1e-8)
+        - SGDClassifier(alpha=10)
+        - XGBClassifier(n_estimators=10, max_depth=5)
+      final_estimator: XGBClassifier(n_estimators=10, max_depth=5)
     ```
 
     Args:
@@ -132,7 +136,5 @@ def convert_CustomStackingClassifier_yaml_to_object(yaml: dict):
     final_estimator = convert_ML_model_string_to_object_4(final_estimator)
 
     return CustomStackingClassifier(
-        estimators=estimators,
-        weights=list(yaml.weights),
-        final_estimator=final_estimator,
+        estimators=estimators, final_estimator=final_estimator
     )
