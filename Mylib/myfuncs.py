@@ -9,7 +9,12 @@ from sklearn.model_selection import PredefinedSplit
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import (
+    GridSearchCV,
+    train_test_split,
+    ParameterGrid,
+    ParameterSampler,
+)
 from sklearn.inspection import permutation_importance
 import matplotlib.pyplot as plt
 from typing import Union
@@ -28,16 +33,7 @@ from sklearn.feature_selection import (
 )
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_score
-from Mylib import stringToObjectConverter
-from xgboost import XGBClassifier, XGBRegressor
-from lightgbm import LGBMClassifier, LGBMRegressor
-from Mylib.myclasses import CustomStackingClassifier, CustomStackingRegressor
-from sklearn.ensemble import (
-    RandomForestClassifier,
-    ExtraTreesClassifier,
-    RandomForestRegressor,
-    ExtraTreesRegressor,
-)
+import random
 
 
 SCORINGS_PREFER_MININUM = ["log_loss", "mse", "mae"]
@@ -274,19 +270,31 @@ def get_features_target_spliter_for_CV_train_train(train_features, train_target)
     return features, target, spliter
 
 
-def create_directories(path_to_directories: list, verbose=True):
+def create_directories(path_to_directories: list):
     """create list of directories
 
     Args:
         path_to_directories (list): list of path of directories
-        verbose (bool, optional): ignore if multiple dirs is to be created. Defaults to True.
 
     """
 
     for path in path_to_directories:
         os.makedirs(path, exist_ok=True)
-        if verbose:
-            print(f"created directory at: {path}")
+
+
+def create_directories_on_colab(path_to_directories: list):
+    """create list of directories
+
+    Args:
+        path_to_directories (list): list of path of directories
+
+    """
+    if isinstance(path_to_directories, list) == False:
+        raise TypeError("Tham số path_to_directories phải là 1 list")
+
+    for path in path_to_directories:
+        if os.path.exists(path) == False:
+            os.makedirs(path)
 
 
 def save_json(path: str, data: dict):
@@ -467,7 +475,7 @@ def get_describe_stats_for_numeric_cat_cols(data):
     max_of_cols = data.max().to_frame(name="max")
     median_of_cols = data.quantile([0.5]).T.rename(columns={0.5: "median"})
 
-    result = pd.concat([min_of_cols, max_of_cols, median_of_cols], axis=1).T
+    result = pd.concat([min_of_cols, max_of_cols, median_of_cols], axis=1)
 
     return result
 
@@ -690,8 +698,8 @@ def replace_in_category_series_33(series, replace_value_list: list):
 
     # Thay a, b -> ab, c -> c1
     replace_value_list = [
-        [['a', 'b'], 'ab'],
-        [['c'], 'c1'],
+        (['a', 'b'], 'ab'),
+        (['c'], 'c1'),
     ]
 
     a = myfuncs.replace_in_category_series_33(a, replace_value_list)
@@ -801,6 +809,14 @@ def plot_hist_box_violin_plots_for_numeric_cols_matplotlib_37(df, numeric_cols):
     Returns:
         fig: _description_
     """
+    # Nếu không có cột nào thì return
+    if numeric_cols == []:
+        return
+
+    # Xử lí trường hợp chỉ có 1 cột numeric
+    if len(numeric_cols) == 1:
+        numeric_cols = [numeric_cols[0], numeric_cols[0]]
+
     # Tạo một figure và các axes
     fig, axes = plt.subplots(
         nrows=len(numeric_cols), ncols=3, figsize=(15, len(numeric_cols) * 5)
@@ -836,6 +852,12 @@ def plot_label_percent_for_categorical_cols_38(df, cat_cols):
     Returns:
         fig: _description_
     """
+    if cat_cols == []:
+        return
+
+    if len(cat_cols) == 1:
+        cat_cols = [cat_cols[0], cat_cols[0]]
+
     fig = make_subplots(rows=len(cat_cols), cols=1, subplot_titles=cat_cols)
 
     for row, col in enumerate(cat_cols, 1):
@@ -853,6 +875,14 @@ def plot_label_percent_for_categorical_cols_38(df, cat_cols):
     )
 
     return fig
+
+
+def plot_label_percent_for_one_categorical_col_39(data):
+    # Vẽ phân phối các label
+    label_percent = data.value_counts() / len(data) * 100
+    fig_bar = px.bar(x=label_percent.values, y=label_percent.index, orientation="h")
+
+    return fig_bar
 
 
 def plot_label_percent_for_categorical_cols_matplotlib_38(df, cat_cols):
@@ -889,6 +919,26 @@ def plot_label_percent_for_categorical_cols_matplotlib_38(df, cat_cols):
     return fig
 
 
+def plot_label_percent_for_one_categorical_col_matplotlib_39(data):
+    fig, ax = plt.subplots()
+
+    # Tính tỷ lệ phần trăm của các label
+    label_percent = data.value_counts() / len(data) * 100
+
+    # Vẽ bar plot (horizontally)
+    ax.barh(
+        label_percent.index,
+        label_percent.values,
+        color="skyblue",
+        edgecolor="black",
+    )
+    ax.set_title(f"Label Percent")
+    ax.set_xlabel("Percentage (%)")
+    ax.set_ylabel("Labels")
+
+    return fig
+
+
 def do_chi_square_test_for_2_variables_39(df, cat_col1, cat_col2):
     """Thực hiện kiểm định chi square cho 2 biến categorical trong df
 
@@ -920,15 +970,6 @@ def do_chi_square_test_for_categorical_cols_40(df, cat_cols):
         for item in combinations_2
     ]
     res = pd.Series(list_p_value, index=combinations_2)
-
-    # list_item0, list_item1, list_pvalue = zip(*combinations_2)
-    # res = pd.DataFrame(
-    #     data={
-    #         "item0": list_item0,
-    #         "item1": list_item1,
-    #         "p_value": list_pvalue,
-    #     }
-    # )
     res = res.sort_values(ascending=True)
 
     return res
@@ -1128,47 +1169,6 @@ def get_min_max_of_numeric_cols_51(df, numeric_cols):
     return df[numeric_cols].describe().loc[["min", "max"]].T
 
 
-def fit_model_incremental_learning(model, feature, target):
-    """Fit model với cài đặt incremental learning, một số model đặc biệt như XGBClassifier, LGBMClassifier, CustomStackingClassifier, ...
-
-    Args:
-        model (_type_): _description_
-        feature (_type_): _description_
-        target (_type_): _description_
-    """
-    if isinstance(model, (XGBClassifier, XGBRegressor)):
-        model.fit(feature, target, xgb_model=model.get_booster())
-        return
-
-    if isinstance(model, (LGBMClassifier, LGBMRegressor)):
-        model.fit(feature, target, init_model=model.booster_)
-
-        return
-
-    if isinstance(model, (CustomStackingClassifier, CustomStackingRegressor)):
-        model.fit_model_incremental_learning(feature, target)
-
-        return
-
-    # Mấy này có warm_start = True nhưng phải tăng số cây lên thì mới học tiếp được
-    if isinstance(
-        model,
-        (
-            RandomForestClassifier,
-            ExtraTreesClassifier,
-            RandomForestRegressor,
-            ExtraTreesRegressor,
-        ),
-    ):
-        model.n_estimators += 50
-        model.fit(feature, target)
-
-        return
-
-    # Các model khác có tham số warm_start = True là đủ rồi
-    model.fit(feature, target)
-
-
 def get_numeric_cols_from_df_54(df):
     """Get numeric cột"""
     cols = pd.Series(df.columns)
@@ -1263,3 +1263,159 @@ def create_list_constants_followed_by_list_list(list_list, constant):
         result.append([constant] * len(one_list))
 
     return result
+
+
+def train_test_split_one_df_into_two_subdfs_in_stratified(
+    df, train_size, col_for_stratified
+):
+    df_train, df_val = train_test_split(
+        df, test_size=(1 - train_size), stratify=df[col_for_stratified]
+    )
+    return df_train, df_val
+
+
+def train_test_split_one_df_into_two_subdfs(df, train_size):
+    df_train, df_val = train_test_split(df, test_size=(1 - train_size))
+    return df_train, df_val
+
+
+def train_test_split_one_df_into_three_subdfs_in_stratified(
+    df, train_size, val_size, col_for_stratified
+):
+    """Tách df thành 3 tập con theo stratified fashion
+
+    Args:
+        df (_type_): _description_
+        train_size (_type_): tỉ lệ tập train
+        val_size (_type_): tỉ lệ tập val
+        col_for_stratified (_type_): tên cột dùng cho stratified fashion
+
+    Returns:
+        (df_train, df_val, df_test): _description_
+    """
+    # Tách tập train ra trước
+    df_train, df_rest = train_test_split(
+        df, test_size=(1 - train_size), stratify=df[col_for_stratified]
+    )
+
+    # Phần còn lại chia thành 2 tập val , test
+    test_size = 1 - train_size - val_size
+    test_size_in_df_rest = test_size / (1 - train_size)
+    df_val, df_test = train_test_split(
+        df_rest, test_size=test_size_in_df_rest, stratify=df_rest[col_for_stratified]
+    )
+
+    return df_train, df_val, df_test
+
+
+def train_test_split_one_df_into_three_subdfs(df, train_size, val_size):
+    """Chia df thành 3 tập train, val và test
+
+    Args:
+        df (_type_): _description_
+        train_size (_type_): _description_
+        val_size (_type_): _description_
+
+    Returns:
+        (df_train, df_val, df_test): _description_
+    """
+    # Tách tập train ra trước
+    df_train, df_rest = train_test_split(df, test_size=(1 - train_size))
+
+    # Phần còn lại chia thành 2 tập val , test
+    test_size = 1 - train_size - val_size
+    test_size_in_df_rest = test_size / (1 - train_size)
+    df_val, df_test = train_test_split(df_rest, test_size=test_size_in_df_rest)
+
+    return df_train, df_val, df_test
+
+
+def split_a_list_into_three_sublist(list_data, train_size, val_size):
+    """Chia 1 list thành 3 list con, kiểu như chia thành 3 tập train, val, test
+
+    Args:
+        list_data (_type_): _description_
+        train_size (_type_): tỉ lệ tập train (tập đầu tiên)
+        val_size (_type_): tỉ lệ tập val (tập thứ hai), phần còn lại là tập thứ ba
+
+    Returns:
+        (train_data, val_data, test_data): _description_
+    """
+    random.shuffle(list_data)
+    num_train_samples = int(train_size * len(list_data))
+    num_val_samples = int(val_size * len(list_data))
+
+    train_data = list_data[:num_train_samples]
+    val_data = list_data[num_train_samples : num_train_samples + num_val_samples]
+    test_data = list_data[num_train_samples + num_val_samples :]
+
+    return train_data, val_data, test_data
+
+
+def read_content_from_file_60(logs_filepath):
+    with open(logs_filepath, mode="r") as file:
+        content = file.read()
+
+    return content
+
+
+def write_content_to_file(result, file_path):
+    with open(file_path, mode="w") as file:
+        file.write(result)
+
+
+def plot_explained_variance_ratio_of_PCA(data):
+    pca = PCA()
+    pca.fit(data)
+    cumsum = np.cumsum(pca.explained_variance_ratio_)
+
+    fig = px.line(
+        x=list(range(1, len(cumsum) + 1)),
+        y=cumsum,
+        markers=True,
+    )
+    return fig
+
+
+def plot_explained_variance_ratio_of_PCA_plt(data):
+    pca = PCA()
+    pca.fit(data)
+    cumsum = np.cumsum(pca.explained_variance_ratio_)
+    list_n_components = list(range(1, len(cumsum) + 1))
+
+    plt.plot(list_n_components, cumsum, color="blue")
+    plt.grid(True)
+    plt.show()
+
+
+def randomize_dict(value_dict, num_sample):
+    # Tính số tổ hợp trong value_dict
+    total_combinations = 1
+    for v in value_dict.values():
+        total_combinations *= len(v)
+
+    if num_sample > total_combinations:
+        return list(ParameterGrid(value_dict))
+
+    return list(ParameterSampler(value_dict, n_iter=num_sample, random_state=42))
+
+
+def get_full_list_dict(value_dict):
+    return list(ParameterGrid(value_dict))
+
+
+def subtract_2list_set(A, a):
+    """Trừ 2 danh sách, các phần tử trong danh sách là các set"""
+    set_A = set(tuple(sorted(d.items())) for d in A)
+    set_a = set(tuple(sorted(d.items())) for d in a)
+    diff = set_A - set_a
+    diff = [dict(t) for t in diff]
+    return diff
+
+
+def randomize_list(value_list, num_sample):
+    """Random 1 list con gồm num_sample phần tử từ value_list"""
+    if num_sample > len(value_list):
+        return value_list
+
+    return random.sample(value_list, num_sample)

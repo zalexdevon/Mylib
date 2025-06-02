@@ -1,32 +1,23 @@
 import pandas as pd
 import numpy as np
-import matplotlib.cm as cm
 from sklearn.base import (
     BaseEstimator,
     TransformerMixin,
-    ClassifierMixin,
-    RegressorMixin,
 )
 from Mylib import myfuncs
 from sklearn import metrics
-import os
 from sklearn.decomposition import IncrementalPCA, KernelPCA
 from sklearn.manifold import LocallyLinearEmbedding
 import pandas as pd
 from Mylib import myfuncs
 from sklearn.preprocessing import (
     OneHotEncoder,
-    StandardScaler,
     MinMaxScaler,
     OrdinalEncoder,
 )
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
-from imblearn.over_sampling import SMOTE
-from Mylib import stringToObjectConverter
-import os
-import math
 
 
 class ColumnsDeleter(BaseEstimator, TransformerMixin):
@@ -41,6 +32,8 @@ class ColumnsDeleter(BaseEstimator, TransformerMixin):
         self.columns = columns
 
     def fit(self, X, y=None):
+
+        self.is_fitted_ = True
         return self
 
     def transform(self, X, y=None):
@@ -269,132 +262,6 @@ class RegressorEvaluator:
         )
 
 
-class BestModelSearcher:
-    """Searcher đi tìm model tốt nhất và train, val scoring tương ứng
-
-    Hàm chính:
-        - next()
-
-    Examples:
-        Với **scoring = accuracy và target_score = 0.99**
-
-        Tìm model thỏa val_accuracy > 0.99 và train_accuracy > 0.99 (1) và val_accuracy là lớn nhất trong số đó
-
-        Nếu không thỏa (1) thì lấy theo val_accuracy lớn nhất
-
-    Attributes:
-        models (_type_): Model tốt nhất đang ở trong này
-        train_scorings (_type_):
-        val_scorings (_type_):
-        target_score (_type_): Chỉ tiêu đề ra
-        scoring (_type_): Chỉ số đánh giá
-
-
-    """
-
-    def __init__(self, models, train_scorings, val_scorings, target_score, scoring):
-        self.models = models
-        self.train_scorings = train_scorings
-        self.val_scorings = val_scorings
-        self.target_score = target_score
-        self.scoring = scoring
-
-    def find_train_val_scorings_to_find_the_best(self):
-        sign_for_score = 1  # Nếu scoring cần min thì lấy âm -> quy về tìm lớn nhất thôi
-        if self.scoring in myfuncs.SCORINGS_PREFER_MININUM:
-            self.target_score = -self.target_score
-            sign_for_score = -1
-
-        self.train_scorings_to_find_the_best = np.asarray(
-            [item * sign_for_score for item in self.train_scorings]
-        )
-        self.val_scorings_to_find_the_best = np.asarray(
-            [item * sign_for_score for item in self.val_scorings]
-        )
-
-    def next(self):
-        self.find_train_val_scorings_to_find_the_best()
-
-        indexs_good_model = np.where(
-            (self.val_scorings_to_find_the_best > self.target_score)
-            & (self.train_scorings_to_find_the_best > self.target_score)
-        )[0]
-
-        index_best_model = None
-        if (
-            len(indexs_good_model) == 0
-        ):  # Nếu ko có model nào đạt chỉ tiêu thì lấy cái tốt nhất
-            index_best_model = np.argmax(self.val_scorings_to_find_the_best)
-        else:
-            val_series = pd.Series(
-                self.val_scorings_to_find_the_best[indexs_good_model],
-                index=indexs_good_model,
-            )
-            index_best_model = val_series.idxmax()
-
-        best_model = self.models[index_best_model]
-        train_scoring = self.train_scorings[index_best_model]
-        val_scoring = self.val_scorings[index_best_model]
-
-        return best_model, index_best_model, train_scoring, val_scoring
-
-
-class CustomStackingClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, estimators, final_estimator, weights=None):
-        self.estimators = estimators
-        self.final_estimator = final_estimator
-        self.weights = weights
-
-        if self.weights is None:
-            self.weights = [1] * len(self.estimators)
-
-    def fit(self, X, y):
-        for estimator in self.estimators:
-            estimator.fit(X, y)
-
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        self.final_estimator.fit(new_feature, y)
-
-        return self
-
-    def fit_model_incremental_learning(self, X, y):
-        for estimator in self.estimators:
-            myfuncs.fit_model_incremental_learning(estimator, X, y)
-
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        myfuncs.fit_model_incremental_learning(self.final_estimator, new_feature, y)
-
-        return self
-
-    def predict(self, X):
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        return self.final_estimator.predict(new_feature)
-
-    def predict_proba(self, X):
-
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        return self.final_estimator.predict_proba(new_feature)
-
-    def get_new_feature_through_estimators(self, X):
-        """Get new feature thông qua các estimators
-
-        VD: nếu có 3 estimators và có 4 label cần phân loại thì kích thước của kết quả là (N, 3 * 4) = (N, 12)
-
-        với N: số sample
-        """
-        list_predict_proba = [
-            estimator.predict_proba(X) * weight
-            for estimator, weight in zip(self.estimators, self.weights)
-        ]
-        new_feature = np.hstack(list_predict_proba)
-
-        return new_feature
-
-
 class CustomIncrementalPCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components, batch_size) -> None:
         super().__init__()
@@ -415,13 +282,15 @@ class CustomIncrementalPCA(BaseEstimator, TransformerMixin):
         for X_batch in list_X_batch:
             self.transformer.partial_fit(X_batch)
 
+        self.is_fitted_ = True
+        return self
+
     def transform(self, X, y=None):
         X = self.transformer.transform(X)
 
         X = pd.DataFrame(X)
 
-        self.cols = X.columns
-
+        self.cols = X.columns.tolist()
         return X
 
     def fit_transform(self, X, y=None):
@@ -455,13 +324,15 @@ class BatchRBFKernelPCA(BaseEstimator, TransformerMixin):
         for X_batch in list_X_batch:
             self.transformer.fit(X_batch)
 
+        self.is_fitted_ = True
+        return self
+
     def transform(self, X, y=None):
         X = self.transformer.transform(X)
 
         X = pd.DataFrame(X)
 
-        self.cols = X.columns
-
+        self.cols = X.columns.tolist()
         return X
 
     def fit_transform(self, X, y=None):
@@ -495,13 +366,15 @@ class CustomLocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         for X_batch in list_X_batch:
             self.transformer.fit(X_batch)
 
+        self.is_fitted_ = True
+        return self
+
     def transform(self, X, y=None):
         X = self.transformer.transform(X)
 
         X = pd.DataFrame(X)
 
-        self.cols = X.columns
-
+        self.cols = X.columns.tolist()
         return X
 
     def fit_transform(self, X, y=None):
@@ -518,7 +391,7 @@ class MultiplyWeightsTransformer(BaseEstimator, TransformerMixin):
         self.weights = weights
 
     def fit(self, X, y=None):
-
+        self.is_fitted_ = True
         return self
 
     def transform(self, X, y=None):
@@ -526,7 +399,6 @@ class MultiplyWeightsTransformer(BaseEstimator, TransformerMixin):
             X[col_name] = X[col_name] * weight
 
         self.cols = X.columns.tolist()
-
         return X
 
     def fit_transform(self, X, y=None):
@@ -548,14 +420,16 @@ class DuringFeatureTransformer(BaseEstimator, TransformerMixin):
             numeric_cols,
             numericcat_cols,
             _,
-            _,
+            binary_cols,
             nominal_cols,
             _,
         ) = myfuncs.get_different_types_feature_cols_from_df_14(X)
 
-        numeric_cols = numeric_cols + numericcat_cols
+        numeric_cols = (
+            numeric_cols + numericcat_cols + binary_cols
+        )  # Bao gồm cột numeric, numericcat và binary
 
-        ordinal_binary_cols = list(self.feature_ordinal_dict.keys())
+        ordinal_cols = list(self.feature_ordinal_dict.keys())
 
         nominal_cols_pipeline = Pipeline(
             steps=[
@@ -564,7 +438,7 @@ class DuringFeatureTransformer(BaseEstimator, TransformerMixin):
             ]
         )
 
-        ordinal_binary_cols_pipeline = Pipeline(
+        ordinal_cols_pipeline = Pipeline(
             steps=[
                 (
                     "1",
@@ -578,20 +452,26 @@ class DuringFeatureTransformer(BaseEstimator, TransformerMixin):
             transformers=[
                 ("1", MinMaxScaler(), numeric_cols),
                 ("2", nominal_cols_pipeline, nominal_cols),
-                ("3", ordinal_binary_cols_pipeline, ordinal_binary_cols),
+                ("3", ordinal_cols_pipeline, ordinal_cols),
             ],
         )
 
         self.column_transformer.fit(X)
 
+        self.is_fitted_ = True
+        return self
+
     def transform(self, X, y=None):
         X = self.column_transformer.transform(X)
-
-        self.cols = myfuncs.get_real_column_name_from_get_feature_names_out(
-            self.column_transformer.get_feature_names_out()
+        X = pd.DataFrame(
+            X,
+            columns=myfuncs.get_real_column_name_from_get_feature_names_out(
+                self.column_transformer.get_feature_names_out()
+            ),
         )
 
-        return pd.DataFrame(X, columns=self.cols)
+        self.cols = X.columns.tolist()
+        return X
 
     def fit_transform(self, X, y=None):
         self.fit(X)
@@ -609,6 +489,9 @@ class NamedColumnTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         self.column_transformer.fit(X)
 
+        self.is_fitted_ = True
+        return self
+
     def transform(self, X, y=None):
         X = self.column_transformer.transform(X)
 
@@ -617,154 +500,14 @@ class NamedColumnTransformer(BaseEstimator, TransformerMixin):
                 self.column_transformer.get_feature_names_out()
             )
         )
+        X = pd.DataFrame(X, columns=cols)
 
-        return pd.DataFrame(
-            X,
-            columns=cols,
-        )
+        self.cols = X.columns.tolist()
+        return X
 
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
 
-
-class CustomManyLayersStackingClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, list_estimators, final_estimator, list_weights=None):
-        """Phiên bản nhiều layers của CustomStackingClassifier <br>
-
-        Examples:
-        ```
-        list_estimators = [[LogisticRegression(), XGBClassifier(), RandomForest()], [XGBClassifier(), RandomForest()]]
-        final_estimator = LogisticRegression()
-        ```
-        Khi đó cấu trúc của model như sau:
-        ```
-        layer 1: LogisticRegression(), XGBClassifier(), RandomForest()
-        layer 2: XGBClassifier(), RandomForest()
-        layer cuối: LogisticRegression()
-        ```
-        Ví dụ nếu có dùng weights, thì lưu ý weights phải có cấu trúc tương ứng với list_estimators, vd theo ở trên thì :
-        ```
-        weights = [[1,2,3], [2,3]]
-        ```
-
-        Args:
-            list_estimators (_type_): _description_
-            final_estimator (_type_): _description_
-            weights (_type_, optional): trọng số ứng với cấu trúc của **list_estimators** đấy nhen !!!!!!. Defaults to None.
-        """
-        self.list_estimators = list_estimators
-        self.final_estimator = final_estimator
-        self.list_weights = list_weights
-
-        if self.list_weights is None:
-            self.list_weights = myfuncs.create_list_constants_followed_by_list_list(
-                self.list_estimators
-            )
-
-    def fit_one_estimators_and_convert_X(self, estimators, weights, X, y):
-        result = []
-
-        for estimator, weight in zip(estimators, weights):
-            estimator.fit(X, y)
-            result.append(estimator.predict_proba(X) * weight)
-
-        return np.hstack(result)
-
-    def fit(self, X, y):
-        for estimators, weights in zip(self.list_estimators, self.list_weights):
-            X = self.fit_one_estimators_and_convert_X(estimators, weights, X, y)
-
-        self.final_estimator.fit(X, y)
-
-    def fit_model_incremental_learning_one_estimators_and_convert_X(
-        self, estimators, weights, X, y
-    ):
-        result = []
-
-        for estimator, weight in zip(estimators, weights):
-            myfuncs.fit_model_incremental_learning(estimator, X, y)
-            result.append(estimator.predict_proba(X) * weight)
-
-        return np.hstack(result)
-
-    def fit_model_incremental_learning(self, X, y):
-        for estimators, weights in zip(self.list_estimators, self.list_weights):
-            X = self.fit_model_incremental_learning_one_estimators_and_convert_X(
-                estimators, weights, X, y
-            )
-
-        myfuncs.fit_model_incremental_learning(self.final_estimator, X, y)
-
-    def predict(self, X):
-        new_feature = self.get_new_feature_through_list_estimators(X)
-
-        return self.final_estimator.predict(new_feature)
-
-    def predict_proba(self, X):
-        new_feature = self.get_new_feature_through_list_estimators(X)
-
-        return self.final_estimator.predict_proba(new_feature)
-
-    def get_new_feature_through_estimators(self, estimators, weights, X):
-        result = []
-
-        for estimator, weight in zip(estimators, weights):
-            result.append(estimator.predict_proba(X) * weight)
-
-        return np.hstack(result)
-
-    def get_new_feature_through_list_estimators(self, X):
-        for estimators, weights in zip(self.list_estimators, self.list_weights):
-            X = self.get_new_feature_through_estimators(estimators, weights, X)
-
-        return X
-
-
-class CustomStackingRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, estimators, final_estimator, weights=None):
-        self.estimators = estimators
-        self.final_estimator = final_estimator
-        self.weights = weights
-
-        if self.weights is None:
-            self.weights = [1] * len(self.estimators)
-
-    def fit(self, X, y):
-        for estimator in self.estimators:
-            estimator.fit(X, y)
-
-        new_feature = self.get_new_feature_through_estimators(X)
-        self.final_estimator.fit(new_feature, y)
-
-        return self
-
-    def fit_model_incremental_learning(self, X, y):
-        for estimator in self.estimators:
-            myfuncs.fit_model_incremental_learning(estimator, X, y)
-
-        new_feature = self.get_new_feature_through_estimators(X)
-        myfuncs.fit_model_incremental_learning(self.final_estimator, new_feature, y)
-
-        return self
-
-    def predict(self, X):
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        return self.final_estimator.predict(new_feature)
-
-    def predict_proba(self, X):
-
-        new_feature = self.get_new_feature_through_estimators(X)
-
-        return self.final_estimator.predict_proba(new_feature)
-
-    def get_new_feature_through_estimators(self, X):
-        """Get new feature thông qua các estimators và lưu ý đây là regression nhé"""
-        list_predict_proba = [
-            estimator.predict(X) * weight
-            for estimator, weight in zip(self.estimators, self.weights)
-        ]
-        new_feature = np.hstack(list_predict_proba)
-
-        return new_feature
+    def get_feature_names_out(self, input_features=None):
+        return self.cols
