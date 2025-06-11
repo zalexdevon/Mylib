@@ -1,7 +1,6 @@
 import yaml
 from box import ConfigBox  # để trả về object dạng truy cập bằng chấm
 from box.exceptions import BoxValueError  # để bắt lỗi file trống
-from Mylib import stringToObjectConverter
 
 
 def read_yaml(path_to_yaml: str) -> ConfigBox:
