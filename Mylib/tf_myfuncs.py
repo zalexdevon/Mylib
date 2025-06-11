@@ -1,9 +1,6 @@
 import tensorflow as tf
-import pandas as pd
 from sklearn import metrics
 import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from PIL import Image
 import shutil
 import random
 import os
@@ -11,16 +8,7 @@ import numpy as np
 from tensorflow.keras.callbacks import EarlyStopping
 
 
-def create_tfdataset_from_pandas_dataframe(df, target_col, batch_size):
-    X = df.drop(columns=[target_col]).values
-    y = df[target_col].values
-
-    dataset = tf.data.Dataset.from_tensor_slices((X, y))
-    dataset = dataset.batch(batch_size)
-    return dataset
-
-
-def split_tfdataset_into_tranvaltest_1(
+def split_tfdataset_into_3_parts(
     ds: tf.data.Dataset,
     train_size=0.8,
     val_size=0.1,
@@ -54,11 +42,11 @@ def split_tfdataset_into_tranvaltest_1(
     return train_ds, val_ds, test_ds
 
 
-def cache_prefetch_tfdataset_2(ds: tf.data.Dataset, shuffle_size=1000):
+def cache_prefetch_tfdataset(ds: tf.data.Dataset, shuffle_size=1000):
     return ds.cache().shuffle(shuffle_size).prefetch(buffer_size=tf.data.AUTOTUNE)
 
 
-def train_test_split_tfdataset_3(
+def split_tfdataset_into_2_parts(
     ds: tf.data.Dataset, test_size=0.2, shuffle=True, shuffle_size=10000
 ):
     """Chia dataset thành tập train, test theo tỉ lệ của tập test
@@ -79,39 +67,13 @@ def train_test_split_tfdataset_3(
     return train_ds, test_ds
 
 
-def convert_pdDataframe_to_tfDataset_13(
-    df: pd.DataFrame, target_col: str, batch_size: int
-):
-    """Chuyển pd.Dataframe thành tf.Dataset có chia sẵn các batch, phục vụ cho sử dụng Deep learning đối với dữ liệu đầu vào dạng bảng
-    Args:
-        df (pd.DataFrame): bảng
-        target_col (str): tên cột mục tiêu
-        batch_size (int):
-
-    Returns:
-        dataset:
-    """
-    # Tách các đặc trưng và nhãn mục tiêu
-    features = df.drop(columns=[target_col]).values
-    target = df[target_col].values
-
-    # Tạo tf.data.Dataset từ các đặc trưng và nhãn
-    dataset = tf.data.Dataset.from_tensor_slices((features, target))
-
-    # Phân batch với batch_size=2
-    dataset = dataset.batch(batch_size)
-
-    return dataset
-
-
-def get_classification_report_for_DLmodel_21(model, ds, class_names, batch_size):
+def get_classification_report(model, ds, class_names):
     """Get classification_report cho DL model
 
     Args:
         model (_type_): _description_
         ds (_type_): _description_
         class_names (_type_): _description_
-        batch_size (_type_): _description_
 
     """
     y_true = []
@@ -122,7 +84,7 @@ def get_classification_report_for_DLmodel_21(model, ds, class_names, batch_size)
     # Lặp qua các batch trong train_ds
     for images, labels in ds:
         # Dự đoán bằng mô hình
-        predictions = model.predict(images, batch_size=batch_size, verbose=0)
+        predictions = model.predict(images, verbose=0)
 
         y_pred_batch = class_names[np.argmax(predictions, axis=-1)].tolist()
         y_true_batch = class_names[np.asarray(labels)].tolist()
@@ -132,7 +94,7 @@ def get_classification_report_for_DLmodel_21(model, ds, class_names, batch_size)
     return metrics.classification_report(y_true, y_pred)
 
 
-def plot_train_val_metric_per_epoch_for_DLtraining_22(history, metric):
+def plot_train_val_metric_per_epoch(history, metric):
     """Vẽ biểu đồ train-val metric theo từng epoch của Deep Learning model
 
     Args:
@@ -154,36 +116,7 @@ def plot_train_val_metric_per_epoch_for_DLtraining_22(history, metric):
     return fig
 
 
-def convert_numpy_image_array_to_jpg_files_12(
-    numpy_array: np.ndarray, folder_path: str
-):
-    """Chuyển đổi mảng numpy (trước đó đã từng chuyển ảnh sang) về lại file ảnh và lưu trong 1 thư mục **folder_path**
-
-    Args:
-        numpy_array (np.ndarray): các giá trị từ **0 -> 255**,  shape = (n, height, width, channels), với n là số lượng ảnh
-        folder_path (str): đường dẫn thư mục
-    """
-
-    for idx, image_array in enumerate(numpy_array):
-        image = Image.fromarray(image_array.astype("uint8"))
-
-        image.save(f"{folder_path}/image_{idx}.jpg")
-
-
-def show_img_11(img_path):
-    """Show ảnh lên
-
-    Args:
-        img_path (str): đường dẫn đến file
-    """
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    img = mpimg.imread(img_path)
-    ax.imshow(img)
-    ax.axis("off")
-
-
-def split_classification_folder_into_two_subfolders(
+def split_classification_folder_into_two(
     src_dir: str, dest_dir: str, categories: list, dest_size=0.2
 ):
     """Chia classfication thư mục thành 2 thư mục
@@ -223,16 +156,14 @@ def split_classification_folder_into_two_subfolders(
             )
 
 
-def split_classification_folder_into_three_subfolders(
+def split_classification_folder_into_three(
     src_dir, train_dir, val_dir, test_dir, categories, train_size, val_size
 ):
     # Tách tập train ra trước
-    split_classification_folder_into_two_subfolders(
-        src_dir, train_dir, categories, train_size
-    )
+    split_classification_folder_into_two(src_dir, train_dir, categories, train_size)
 
     # Tách tập val ra
-    split_classification_folder_into_two_subfolders(
+    split_classification_folder_into_two(
         src_dir, val_dir, categories, val_size / (1 - train_size)
     )
 
@@ -257,7 +188,7 @@ def copy_one_callback(callback):
         raise ValueError("Chỉ mới định nghĩa cho EarlyStopping")
 
 
-def get_full_target_and_pred_for_softmax_DLmodel(model, ds):
+def get_full_target_and_pred_for_softmax_model(model, ds):
     """Get full target và prediction cho các model mà kết thúc bằng layer Dense với activatoin = 'softmax'
 
     Args:
@@ -285,7 +216,7 @@ def get_full_target_and_pred_for_softmax_DLmodel(model, ds):
     return y_true, y_pred
 
 
-def get_full_target_and_pred_for_regression_DLmodel(model, ds):
+def get_full_target_and_pred_for_regression_model(model, ds):
     """Get full target và prediction cho regression model, tức là kết thúc bằng layer Dense(1)
 
     Args:
@@ -311,7 +242,35 @@ def get_full_target_and_pred_for_regression_DLmodel(model, ds):
     return y_true, y_pred
 
 
-def convert_list_tuples_to_tf_dataset(pairs, batch_size):
+def get_full_target_and_pred_for_binary_model(model, ds):
+    """Get full target và prediction cho binary classification model, tức là kết thúc bằng layer Dense(1, activation = 'sigmoid')
+
+    Args:
+        model (_type_): _description_
+        ds (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    y_true = []
+    y_pred = []
+
+    # Lặp qua các batch trong train_ds
+    for feature, true_data in ds:
+        # Dự đoán bằng mô hình
+        predictions = model.predict(feature, verbose=0)
+
+        y_pred_batch = (
+            (predictions > 0.5).astype("int").tolist()
+        )  # > 0.5 -> lớp 1, ngược lại là 0
+        y_true_batch = true_data.numpy().tolist()  # Convert về list
+        y_true += y_true_batch
+        y_pred += y_pred_batch
+
+    return y_true, y_pred
+
+
+def convert_pairs_to_tf_dataset(pairs, batch_size):
     """Chuyển list các tuples (item1, item2) thành tf.data.Dataset với batch_size
 
     Args:

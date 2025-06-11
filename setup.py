@@ -4,7 +4,7 @@ with open("README.md", mode="r") as file:
     description = file.read()
 
 MYLIB_NAME = "zzzz_mylib_23_4"
-__version__ = "0.115"  # Chỉnh phiên bản ở đây sau mỗi lần sửa code
+__version__ = "0.123"  # Chỉnh phiên bản ở đây sau mỗi lần sửa code
 
 REQUIRED_LIBS = []
 

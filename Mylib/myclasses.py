@@ -9,11 +9,12 @@ from sklearn import metrics
 from sklearn.decomposition import IncrementalPCA, KernelPCA
 from sklearn.manifold import LocallyLinearEmbedding
 import pandas as pd
-from Mylib import myfuncs
+from Mylib import myfuncs, sk_myfuncs
 from sklearn.preprocessing import (
     OneHotEncoder,
     MinMaxScaler,
     OrdinalEncoder,
+    StandardScaler,
 )
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -120,7 +121,7 @@ class ClassifierEvaluator:
             named_train_target_data, named_train_pred, labels=class_names
         )
         np.fill_diagonal(train_confusion_matrix, 0)
-        train_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        train_confusion_matrix = sk_myfuncs.get_heatmap_for_confusion_matrix(
             train_confusion_matrix, class_names
         )
 
@@ -128,7 +129,7 @@ class ClassifierEvaluator:
             named_val_target_data, named_val_pred, labels=class_names
         )
         np.fill_diagonal(val_confusion_matrix, 0)
-        val_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        val_confusion_matrix = sk_myfuncs.get_heatmap_for_confusion_matrix(
             val_confusion_matrix, class_names
         )
 
@@ -166,7 +167,7 @@ class ClassifierEvaluator:
             named_train_target_data, named_train_pred, labels=class_names
         )
         np.fill_diagonal(test_confusion_matrix, 0)
-        test_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        test_confusion_matrix = sk_myfuncs.get_heatmap_for_confusion_matrix(
             test_confusion_matrix, class_names
         )
 
@@ -409,13 +410,28 @@ class MultiplyWeightsTransformer(BaseEstimator, TransformerMixin):
         return self.cols
 
 
-class DuringFeatureTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, feature_ordinal_dict) -> None:
+class FeatureColumnsTransformer(BaseEstimator, TransformerMixin):
+    SCALER_NAME_VALID_VALUES = ["minmax", "standard"]
+
+    SCALER_DICT = {
+        "minmax": MinMaxScaler(),
+        "standard": StandardScaler(),
+    }
+
+    def __init__(
+        self, categories_for_OrdinalEncoder_dict, scaler_name="minmax"
+    ) -> None:
+        # Kiểm tra tham số
+        if scaler_name not in self.SCALER_NAME_VALID_VALUES:
+            raise ValueError(
+                f"class FeatureColumnsTransforme với tham số scaler_name = {scaler_name} không hợp lệ"
+            )
+
         super().__init__()
-        self.feature_ordinal_dict = feature_ordinal_dict
+        self.categories_for_OrdinalEncoder_dict = categories_for_OrdinalEncoder_dict
+        self.scaler_name = scaler_name
 
     def fit(self, X, y=None):
-        # Lấy các cột numeric, nominal, ordinal
         (
             numeric_cols,
             numericcat_cols,
@@ -423,91 +439,54 @@ class DuringFeatureTransformer(BaseEstimator, TransformerMixin):
             binary_cols,
             nominal_cols,
             _,
-        ) = myfuncs.get_different_types_feature_cols_from_df_14(X)
+        ) = myfuncs.get_different_types_feature_cols_from_df(X)
 
-        numeric_cols = (
-            numeric_cols + numericcat_cols + binary_cols
-        )  # Bao gồm cột numeric, numericcat và binary
+        # Get các cột numeric
+        numeric_cols = numeric_cols + numericcat_cols + binary_cols
 
-        ordinal_cols = list(self.feature_ordinal_dict.keys())
-
-        nominal_cols_pipeline = Pipeline(
-            steps=[
-                ("1", OneHotEncoder(sparse_output=False, drop="first")),
-                ("2", MinMaxScaler()),
-            ]
+        # Get thông tin liên quan cột ordinal
+        ordinal_cols = list(self.categories_for_OrdinalEncoder_dict.keys())
+        categories_for_OrdinalEncoder = list(
+            self.categories_for_OrdinalEncoder_dict.values()
         )
 
-        ordinal_cols_pipeline = Pipeline(
-            steps=[
-                (
-                    "1",
-                    OrdinalEncoder(categories=list(self.feature_ordinal_dict.values())),
-                ),
-                ("2", MinMaxScaler()),
-            ]
-        )
+        # Tạo encoder cho nominal
+        nominal_cols_encoder = OneHotEncoder(sparse_output=False, drop="first")
 
-        self.column_transformer = ColumnTransformer(
+        # Tạo encoder cho ordinal
+        ordinal_cols_encoder = OrdinalEncoder(categories=categories_for_OrdinalEncoder)
+
+        # Tạo transformer biến đổi cho các kiểu cột khác nhau
+        encoder = ColumnTransformer(
             transformers=[
-                ("1", MinMaxScaler(), numeric_cols),
-                ("2", nominal_cols_pipeline, nominal_cols),
-                ("3", ordinal_cols_pipeline, ordinal_cols),
+                ("1", "passthrough", numeric_cols),
+                ("2", nominal_cols_encoder, nominal_cols),
+                ("3", ordinal_cols_encoder, ordinal_cols),
             ],
         )
 
-        self.column_transformer.fit(X)
+        # Tạo scaler
+        scaler = self.SCALER_DICT[self.scaler_name]
+
+        # Tạo pipeline
+        self.pipeline = Pipeline(
+            steps=[
+                ("1", encoder),
+                ("2", scaler),
+            ]
+        )
+
+        # Fit
+        self.pipeline.fit(X)
 
         self.is_fitted_ = True
         return self
 
     def transform(self, X, y=None):
-        X = self.column_transformer.transform(X)
-        X = pd.DataFrame(
-            X,
-            columns=myfuncs.get_real_column_name_from_get_feature_names_out(
-                self.column_transformer.get_feature_names_out()
-            ),
-        )
+        X = self.pipeline.transform(X)
 
-        self.cols = X.columns.tolist()
         return X
 
     def fit_transform(self, X, y=None):
         self.fit(X)
         return self.transform(X)
-
-    def get_feature_names_out(self, input_features=None):
-        return self.cols
-
-
-class NamedColumnTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, column_transformer) -> None:
-        super().__init__()
-        self.column_transformer = column_transformer
-
-    def fit(self, X, y=None):
-        self.column_transformer.fit(X)
-
-        self.is_fitted_ = True
-        return self
-
-    def transform(self, X, y=None):
-        X = self.column_transformer.transform(X)
-
-        cols = myfuncs.fix_name_by_LGBM_standard(
-            myfuncs.get_real_column_name_from_get_feature_names_out(
-                self.column_transformer.get_feature_names_out()
-            )
-        )
-        X = pd.DataFrame(X, columns=cols)
-
-        self.cols = X.columns.tolist()
-        return X
-
-    def fit_transform(self, X, y=None):
-        self.fit(X)
-        return self.transform(X)
-
-    def get_feature_names_out(self, input_features=None):
-        return self.cols

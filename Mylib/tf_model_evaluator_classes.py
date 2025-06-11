@@ -21,7 +21,7 @@ class ClassifierEvaluator:
 
     def evaluate_train_classifier(self):
         train_target_data, train_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_softmax_model(
                 self.model, self.train_ds
             )
         )
@@ -29,7 +29,7 @@ class ClassifierEvaluator:
         train_target_data = [int(item) for item in train_target_data]
 
         val_target_data, val_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_softmax_model(
                 self.model, self.val_ds
             )
         )
@@ -59,7 +59,7 @@ class ClassifierEvaluator:
             named_train_target_data, named_train_pred, labels=class_names
         )
         np.fill_diagonal(train_confusion_matrix, 0)
-        train_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        train_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix(
             train_confusion_matrix, class_names
         )
 
@@ -67,7 +67,7 @@ class ClassifierEvaluator:
             named_val_target_data, named_val_pred, labels=class_names
         )
         np.fill_diagonal(val_confusion_matrix, 0)
-        val_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        val_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix(
             val_confusion_matrix, class_names
         )
 
@@ -84,7 +84,7 @@ class ClassifierEvaluator:
 
     def evaluate_test_classifier(self):
         test_target_data, test_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_softmax_model(
                 self.model, self.train_ds
             )
         )
@@ -108,7 +108,7 @@ class ClassifierEvaluator:
             named_test_target_data, named_test_pred, labels=class_names
         )
         np.fill_diagonal(test_confusion_matrix, 0)
-        test_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix_30(
+        test_confusion_matrix = myfuncs.get_heatmap_for_confusion_matrix(
             test_confusion_matrix, class_names
         )
 
@@ -135,12 +135,12 @@ class RegressorEvaluator:
 
     def evaluate_train_classifier(self):
         train_target_data, train_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_regression_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_regression_model(
                 self.model, self.train_ds
             )
         )
         val_target_data, val_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_regression_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_regression_model(
                 self.model, self.val_ds
             )
         )
@@ -162,7 +162,7 @@ class RegressorEvaluator:
 
     def evaluate_test_classifier(self):
         test_target_data, test_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_regression_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_regression_model(
                 self.model, self.train_ds
             )
         )
@@ -197,11 +197,11 @@ class MachineTranslationEvaluator:
     def evaluate_train_classifier(self):
         # Get thực tế và dự đoán
         train_target, train_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
+            tf_myfuncs.get_full_target_and_pred_for_softmax_model(
                 self.model, self.train_ds
             )
         )
-        val_target, val_pred = tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
+        val_target, val_pred = tf_myfuncs.get_full_target_and_pred_for_softmax_model(
             self.model, self.val_ds
         )
 
@@ -218,10 +218,8 @@ class MachineTranslationEvaluator:
 
     def evaluate_test_classifier(self):
         # Get thực tế và dự đoán
-        test_target, test_pred = (
-            tf_myfuncs.get_full_target_and_pred_for_softmax_DLmodel(
-                self.model, self.train_ds
-            )
+        test_target, test_pred = tf_myfuncs.get_full_target_and_pred_for_softmax_model(
+            self.model, self.train_ds
         )
 
         # Đánh giá: bleu + ...

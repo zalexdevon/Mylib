@@ -3,11 +3,15 @@ setup.py
 Mylib/__init__.py
 Mylib/myclasses.py
 Mylib/myfuncs.py
+Mylib/plotly_myfuncs.py
+Mylib/plt_myfuncs.py
 Mylib/sk_fit_incremental_model.py
 Mylib/sk_model_training_classes.py
-Mylib/sk_model_training_funcs.py
+Mylib/sk_myfuncs.py
+Mylib/statistics_myfuncs.py
 Mylib/tf_callbacks.py
-Mylib/tf_images.py
+Mylib/tf_images_classes.py
+Mylib/tf_images_funcs.py
 Mylib/tf_layer_lists.py
 Mylib/tf_layers.py
 Mylib/tf_metrics.py
